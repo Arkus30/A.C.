@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Transmission en attente</title>
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        background: radial-gradient(circle at center, #0b0b0b, #000);
+        overflow: hidden;
+        color: #cfcfcf;
+        font-family: "Segoe UI", Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .overlay {
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(255,255,255,0.02),
+            rgba(255,255,255,0.02) 1px,
+            transparent 1px,
+            transparent 3px
+        );
+        animation: scan 8s linear infinite;
+        pointer-events: none;
+    }
+
+    @keyframes scan {
+        from { transform: translateY(0); }
+        to { transform: translateY(-50%); }
+    }
+
+    .content {
+        text-align: center;
+        z-index: 1;
+    }
+
+    .label {
+        letter-spacing: 4px;
+        font-size: 14px;
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+
+    #countdown {
+        font-size: 36px;
+        letter-spacing: 4px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="overlay"></div>
+
+<div class="content">
+    <div class="label">TRANSMISSION PROGRAMMÉE</div>
+    <div id="countdown">--J --H --M --S</div>
+</div>
+
+<audio src="ambience.mp3" autoplay loop></audio>
+
+<script>
+const dateCible = new Date("2026-06-01T20:00:00").getTime();
+
+setInterval(() => {
+    const maintenant = new Date().getTime();
+    const distance = dateCible - maintenant;
+
+    if (distance < 0) {
+        document.getElementById("countdown").innerHTML =
+            "TRANSMISSION OUVERTE";
+        return;
+    }
+
+    const j = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((distance % (1000 * 60)) / 1000);
+
+    document.getElementById("countdown").innerHTML =
+        j + "J " + h + "H " + m + "M " + s + "S";
+}, 1000);
+</script>
+
+</body>
+</html>
