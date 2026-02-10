@@ -46,15 +46,23 @@
     }
 
     .inputs input {
+        <div class="inputs" id="slots">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    .slot {
         width: 50px;
         height: 50px;
-        font-size: 24px;
-        text-align: center;
+        border: 1px solid #444;
+        display: inline-block;
         margin: 5px;
         background: #000;
-        color: #cfcfcf;
-        border: 1px solid #444;
-        text-transform: uppercase;
+}
+
+</div>
+
     }
 
     button {
@@ -109,11 +117,14 @@
 
     <!-- REMPLACE CES IMAGES PAR TES SYMBOLES -->
     <div class="symbols">
-        <img src="symbole1.png" alt="symbole">
-        <img src="symbole2.png" alt="symbole">
-        <img src="symbole3.png" alt="symbole">
-        <img src="symbole4.png" alt="symbole">
-        <img src="symbole5.png" alt="symbole">
+        <div class="symbols">
+        <img src="Image1.png" onclick="ajouter('A')">
+        <img src="Image2.png" onclick="ajouter('R')">
+        <img src="Image3.png" onclick="ajouter('K')">
+        <img src="Image4.png" onclick="ajouter('U')">
+        <img src="Image5.png" onclick="ajouter('S')">
+</div>
+
     </div>
 
     <div class="inputs">
@@ -132,21 +143,25 @@
 </div>
 
 <script>
-function verifier() {
-    const code =
-        document.getElementById("c1").value +
-        document.getElementById("c2").value +
-        document.getElementById("c3").value +
-        document.getElementById("c4").value +
-        document.getElementById("c5").value;
+<script>
+let selection = [];
 
-    if (code.toUpperCase() === "ARKUS") {
+function ajouter(valeur) {
+    if (selection.length >= 5) return;
+
+    selection.push(valeur);
+    document.getElementsByClassName("slot")[selection.length - 1].innerText = "■";
+
+    if (selection.length === 5) verifier();
+}
+
+function verifier() {
+    const code = selection.join("");
+
+    if (code === "ARKUS") {
         document.getElementById("result").innerHTML =
             "Désignation reconnue.<br>Transmission complète programmée.";
         lancerCompteRebours();
-    } else {
-        document.getElementById("result").innerHTML = "";
-        document.getElementById("countdown").innerHTML = "";
     }
 }
 
@@ -163,16 +178,13 @@ function lancerCompteRebours() {
             return;
         }
 
-        const jours = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const heures = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const secondes = Math.floor((distance % (1000 * 60)) / 1000);
+        const j = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((distance % (1000 * 60)) / 1000);
 
         document.getElementById("countdown").innerHTML =
-            jours + "J " +
-            heures + "H " +
-            minutes + "M " +
-            secondes + "S";
+            j + "J " + h + "H " + m + "M " + s + "S";
     }, 1000);
 }
 </script>
