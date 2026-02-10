@@ -88,15 +88,9 @@
     }
 
     #result {
-        margin-top: 35px;
+        margin-top: 30px;
         font-size: 16px;
         opacity: 0.9;
-    }
-
-    #countdown {
-        font-size: 20px;
-        margin-top: 15px;
-        letter-spacing: 2px;
     }
 </style>
 </head>
@@ -104,60 +98,58 @@
 <body>
 <div class="container">
 
-    <h1>TRANSMISSION INTERCEPTÉE</h1>
+<h1>TRANSMISSION INTERCEPTÉE</h1>
 
-    <div class="message">
-        Ce message n’a pas d’auteur.<br><br>
-
-        Il a une origine.<br><br>
-
-        Nous ne nommons pas les individus.<br>
-        Nous identifions les points de convergence.<br><br>
-
-        Cherchez ce qui n’est ni un titre,<br>
-        ni une fonction,<br>
-        mais un centre autour duquel l’ordre s’organise.<br><br>
-
-        Traduisez.<br>
-        Assemblez.<br>
-        Entrez ce qui demeure lorsque tout le reste disparaît.
-    </div>
-
-    <!-- SYMBOLES CLIQUABLES -->
-    <!-- Remplace les fichiers par TES symboles -->
-    <div class="symbols">
-        <img src="Image1.png" onclick="ajouter('A','Image1.png')">
-        <img src="Image2.png" onclick="ajouter('R','Image2.png')">
-        <img src="Image3.png" onclick="ajouter('K','Image3.png')">
-        <img src="Image4.png" onclick="ajouter('U','Image4.png')">
-        <img src="Image5.png" onclick="ajouter('S','Image5.png')">
-    </div>
-
-    <!-- CASES DE COMBINAISON -->
-    <div class="slots">
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-    </div>
-
-    <button onclick="reset()">RÉINITIALISER</button>
-
-    <div id="result"></div>
-    <div id="countdown"></div>
-
+<div class="message">
+    Ce message n’a pas d’auteur.<br><br>
+    Il a une origine.<br><br>
+    Nous ne nommons pas les individus.<br>
+    Nous identifions les points de convergence.<br><br>
+    Cherchez ce qui n’est ni un titre,<br>
+    ni une fonction,<br>
+    mais un centre autour duquel l’ordre s’organise.<br><br>
+    Traduisez.<br>
+    Assemblez.<br>
+    Entrez ce qui demeure lorsque tout le reste disparaît.
 </div>
+
+<div class="symbols">
+    <img src="Image1.png" onclick="ajouter('A','Image1.png')">
+    <img src="Image2.png" onclick="ajouter('R','Image2.png')">
+    <img src="Image3.png" onclick="ajouter('K','Image3.png')">
+    <img src="Image4.png" onclick="ajouter('U','Image4.png')">
+    <img src="Image5.png" onclick="ajouter('S','Image5.png')">
+</div>
+
+<div class="slots">
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+    <div class="slot"></div>
+</div>
+
+<button id="resetBtn" onclick="reset()">RÉINITIALISER</button>
+
+<div id="result"></div>
+
+<audio src="ambience.mp3" autoplay loop></audio>
 
 <script>
 let selection = [];
-let images = [];
+let locked = false;
+
+const soundClick = new Audio("click.mp3");
+const soundFalse = new Audio("error.mp3");
+const soundTrue = new Audio("success.mp3");
 
 function ajouter(valeur, image) {
-    if (selection.length >= 5) return;
+    if (locked || selection.length >= 5) return;
+
+    soundClick.currentTime = 0;
+    soundClick.play();
 
     selection.push(valeur);
-    images.push(image);
 
     const slot = document.getElementsByClassName("slot")[selection.length - 1];
     const img = document.createElement("img");
@@ -171,53 +163,32 @@ function verifier() {
     const code = selection.join("");
 
     if (code === "ARKUS") {
-        const audio = new Audio("signal.mp3");
-        audio.play();
+        locked = true;
+        document.getElementById("resetBtn").style.display = "none";
+
+        soundTrue.play();
 
         setTimeout(() => {
             window.location.href = "countdown.html";
-        }, 1500);
+        }, 2000);
     } else {
-        document.getElementById("result").innerHTML =
+        soundFalse.play();
+        document.getElementById("result").innerText =
             "Aucune correspondance valide.";
     }
 }
 
 function reset() {
+    if (locked) return;
+
     selection = [];
-    images = [];
-    document.getElementById("result").innerHTML = "";
-    document.getElementById("countdown").innerHTML = "";
+    document.getElementById("result").innerText = "";
 
     const slots = document.getElementsByClassName("slot");
-    for (let s of slots) {
-        s.innerHTML = "";
-    }
-}
-
-function lancerCompteRebours() {
-    const dateCible = new Date("2026-06-01T20:00:00").getTime();
-
-    setInterval(() => {
-        const maintenant = new Date().getTime();
-        const distance = dateCible - maintenant;
-
-        if (distance < 0) {
-            document.getElementById("countdown").innerHTML =
-                "TRANSMISSION DISPONIBLE";
-            return;
-        }
-
-        const j = Math.floor(distance / (1000 * 60 * 60 * 24));
-        const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const s = Math.floor((distance % (1000 * 60)) / 1000);
-
-        document.getElementById("countdown").innerHTML =
-            j + "J " + h + "H " + m + "M " + s + "S";
-    }, 1000);
+    for (let s of slots) s.innerHTML = "";
 }
 </script>
 
+</div>
 </body>
 </html>
