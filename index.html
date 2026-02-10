@@ -171,9 +171,12 @@ function verifier() {
     const code = selection.join("");
 
     if (code === "ARKUS") {
-        document.getElementById("result").innerHTML =
-            "Désignation reconnue.<br>Transmission complète programmée.";
-        lancerCompteRebours();
+        const audio = new Audio("signal.mp3");
+        audio.play();
+
+        setTimeout(() => {
+            window.location.href = "countdown.html";
+        }, 1500);
     } else {
         document.getElementById("result").innerHTML =
             "Aucune correspondance valide.";
