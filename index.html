@@ -14,19 +14,19 @@
     }
 
     .container {
-        max-width: 800px;
+        max-width: 900px;
         margin: auto;
     }
 
     h1 {
         font-size: 22px;
-        letter-spacing: 2px;
+        letter-spacing: 3px;
         margin-bottom: 30px;
     }
 
     .message {
         font-size: 14px;
-        line-height: 1.6;
+        line-height: 1.7;
         margin-bottom: 40px;
         opacity: 0.85;
     }
@@ -40,33 +40,41 @@
 
     .symbols img {
         width: 100%;
+        cursor: pointer;
         border: 1px solid #333;
         background: #0a0a0a;
         padding: 10px;
+        transition: transform 0.1s;
     }
 
-    .inputs input {
-        <div class="inputs" id="slots">
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
+    .symbols img:hover {
+        transform: scale(1.05);
+    }
+
+    .slots {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
     .slot {
-        width: 50px;
-        height: 50px;
+        width: 60px;
+        height: 60px;
         border: 1px solid #444;
-        display: inline-block;
-        margin: 5px;
         background: #000;
-}
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-</div>
-
+    .slot img {
+        max-width: 100%;
+        max-height: 100%;
     }
 
     button {
-        margin-top: 25px;
+        margin-top: 15px;
         padding: 10px 25px;
         background: #111;
         color: #cfcfcf;
@@ -80,14 +88,14 @@
     }
 
     #result {
-        margin-top: 40px;
+        margin-top: 35px;
         font-size: 16px;
         opacity: 0.9;
     }
 
     #countdown {
         font-size: 20px;
-        margin-top: 20px;
+        margin-top: 15px;
         letter-spacing: 2px;
     }
 </style>
@@ -115,27 +123,26 @@
         Entrez ce qui demeure lorsque tout le reste disparaît.
     </div>
 
-    <!-- REMPLACE CES IMAGES PAR TES SYMBOLES -->
+    <!-- SYMBOLES CLIQUABLES -->
+    <!-- Remplace les fichiers par TES symboles -->
     <div class="symbols">
-        <div class="symbols">
-        <img src="Image1.png" onclick="ajouter('A')">
-        <img src="Image2.png" onclick="ajouter('R')">
-        <img src="Image3.png" onclick="ajouter('K')">
-        <img src="Image4.png" onclick="ajouter('U')">
-        <img src="Image5.png" onclick="ajouter('S')">
-</div>
-
+        <img src="Image1.png" onclick="ajouter('A','Image1.png')">
+        <img src="Image2.png" onclick="ajouter('R','Image2.png')">
+        <img src="Image3.png" onclick="ajouter('K','Image3.png')">
+        <img src="Image4.png" onclick="ajouter('U','Image4.png')">
+        <img src="Image5.png" onclick="ajouter('S','Image5.png')">
     </div>
 
-    <div class="inputs">
-        <input maxlength="1" id="c1">
-        <input maxlength="1" id="c2">
-        <input maxlength="1" id="c3">
-        <input maxlength="1" id="c4">
-        <input maxlength="1" id="c5">
+    <!-- CASES DE COMBINAISON -->
+    <div class="slots">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
     </div>
 
-    <button onclick="verifier()">VALIDER</button>
+    <button onclick="reset()">RÉINITIALISER</button>
 
     <div id="result"></div>
     <div id="countdown"></div>
@@ -143,14 +150,19 @@
 </div>
 
 <script>
-<script>
 let selection = [];
+let images = [];
 
-function ajouter(valeur) {
+function ajouter(valeur, image) {
     if (selection.length >= 5) return;
 
     selection.push(valeur);
-    document.getElementsByClassName("slot")[selection.length - 1].innerText = "■";
+    images.push(image);
+
+    const slot = document.getElementsByClassName("slot")[selection.length - 1];
+    const img = document.createElement("img");
+    img.src = image;
+    slot.appendChild(img);
 
     if (selection.length === 5) verifier();
 }
@@ -162,6 +174,21 @@ function verifier() {
         document.getElementById("result").innerHTML =
             "Désignation reconnue.<br>Transmission complète programmée.";
         lancerCompteRebours();
+    } else {
+        document.getElementById("result").innerHTML =
+            "Aucune correspondance valide.";
+    }
+}
+
+function reset() {
+    selection = [];
+    images = [];
+    document.getElementById("result").innerHTML = "";
+    document.getElementById("countdown").innerHTML = "";
+
+    const slots = document.getElementsByClassName("slot");
+    for (let s of slots) {
+        s.innerHTML = "";
     }
 }
 
