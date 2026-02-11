@@ -5,93 +5,95 @@
 <title>Transmission Interceptée</title>
 
 <style>
-    body {
-        background-color: #050505;
-        color: #cfcfcf;
-        font-family: "Segoe UI", Arial, sans-serif;
-        text-align: center;
-        padding: 40px;
-    }
+body {
+    background: radial-gradient(circle at center, #0a0a0a 0%, #000 80%);
+    color: #cfcfcf;
+    font-family: "Segoe UI", Arial, sans-serif;
+    text-align: center;
+    padding: 40px;
+    overflow-x: hidden;
+}
 
-    .container {
-        max-width: 900px;
-        margin: auto;
-    }
+.container {
+    max-width: 900px;
+    margin: auto;
+}
 
-    h1 {
-        font-size: 22px;
-        letter-spacing: 3px;
-        margin-bottom: 30px;
-    }
+h1 {
+    font-size: 22px;
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+}
 
-    .message {
-        font-size: 14px;
-        line-height: 1.7;
-        margin-bottom: 40px;
-        opacity: 0.85;
-    }
+.message {
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 40px;
+    opacity: 0.85;
+}
 
-    .symbols {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 15px;
-        margin-bottom: 30px;
-    }
+.symbols {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
 
-    .symbols img {
-        width: 100%;
-        cursor: pointer;
-        border: 1px solid #333;
-        background: #0a0a0a;
-        padding: 10px;
-        transition: transform 0.1s;
-    }
+.symbols img {
+    width: 100%;
+    cursor: pointer;
+    border: 1px solid #333;
+    background: #0a0a0a;
+    padding: 10px;
+    transition: transform 0.1s, border 0.2s;
+}
 
-    .symbols img:hover {
-        transform: scale(1.05);
-    }
+.symbols img:hover {
+    transform: scale(1.05);
+    border: 1px solid #666;
+}
 
-    .slots {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 25px;
-    }
+.slots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
 
-    .slot {
-        width: 60px;
-        height: 60px;
-        border: 1px solid #444;
-        background: #000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+.slot {
+    width: 60px;
+    height: 60px;
+    border: 1px solid #444;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-    .slot img {
-        max-width: 100%;
-        max-height: 100%;
-    }
+.slot img {
+    max-width: 100%;
+    max-height: 100%;
+}
 
-    button {
-        margin-top: 15px;
-        padding: 10px 25px;
-        background: #111;
-        color: #cfcfcf;
-        border: 1px solid #444;
-        cursor: pointer;
-        letter-spacing: 1px;
-    }
+button {
+    margin-top: 15px;
+    padding: 10px 25px;
+    background: #111;
+    color: #cfcfcf;
+    border: 1px solid #444;
+    cursor: pointer;
+    letter-spacing: 1px;
+}
 
-    button:hover {
-        background: #1a1a1a;
-    }
+button:hover {
+    background: #1a1a1a;
+}
 
-    #result {
-        margin-top: 30px;
-        font-size: 16px;
-        opacity: 0.9;
-    }
+#result {
+    margin-top: 30px;
+    font-size: 16px;
+    opacity: 0.9;
+}
 </style>
 </head>
 
@@ -101,16 +103,16 @@
 <h1>TRANSMISSION INTERCEPTÉE</h1>
 
 <div class="message">
-    Ce message n’a pas d’auteur.<br><br>
-    Il a une origine.<br><br>
-    Nous ne nommons pas les individus.<br>
-    Nous identifions les points de convergence.<br><br>
-    Cherchez ce qui n’est ni un titre,<br>
-    ni une fonction,<br>
-    mais un centre autour duquel l’ordre s’organise.<br><br>
-    Traduisez.<br>
-    Assemblez.<br>
-    Entrez ce qui demeure lorsque tout le reste disparaît.
+Ce message n’a pas d’auteur.<br><br>
+Il a une origine.<br><br>
+Nous ne nommons pas les individus.<br>
+Nous identifions les points de convergence.<br><br>
+Cherchez ce qui n’est ni un titre,<br>
+ni une fonction,<br>
+mais un centre autour duquel l’ordre s’organise.<br><br>
+Traduisez.<br>
+Assemblez.<br>
+Entrez ce qui demeure lorsque tout le reste disparaît.
 </div>
 
 <div class="symbols">
@@ -133,21 +135,34 @@
 
 <div id="result"></div>
 
-<audio src="ambience.mp3" autoplay loop></audio>
+<!-- AUDIO -->
+<audio id="bgMusic" src="ambience.mp3" loop></audio>
 
 <script>
 let selection = [];
 let locked = false;
+let musicStarted = false;
 
+const bgMusic = document.getElementById("bgMusic");
 const soundClick = new Audio("click.mp3");
 const soundFalse = new Audio("error.mp3");
 const soundTrue = new Audio("success.mp3");
 
+function startMusic() {
+    if (!musicStarted) {
+        bgMusic.volume = 0.4;
+        bgMusic.play().catch(()=>{});
+        musicStarted = true;
+    }
+}
+
 function ajouter(valeur, image) {
     if (locked || selection.length >= 5) return;
 
+    startMusic();
+
     soundClick.currentTime = 0;
-    soundClick.play();
+    soundClick.play().catch(()=>{});
 
     selection.push(valeur);
 
@@ -164,15 +179,18 @@ function verifier() {
 
     if (code === "ARKUS") {
         locked = true;
-        document.getElementById("resetBtn").style.display = "none";
 
-        soundTrue.play();
+        document.getElementById("resetBtn").style.display = "none";
+        document.getElementById("result").innerText = "Correspondance confirmée.";
+
+        soundTrue.play().catch(()=>{});
 
         setTimeout(() => {
             window.location.href = "countdown.html";
         }, 2000);
+
     } else {
-        soundFalse.play();
+        soundFalse.play().catch(()=>{});
         document.getElementById("result").innerText =
             "Aucune correspondance valide.";
     }
