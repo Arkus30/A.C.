@@ -7,15 +7,14 @@
 <style>
 body {
     margin:0;
-    background: radial-gradient(circle at center, #0a0f14 0%, #000 80%);
-    color: #cfcfcf;
+    background: radial-gradient(circle at center, #150000 0%, #000 80%);
+    color: #f5f5f5;
     font-family: "Consolas", monospace;
     text-align: center;
-    padding: 40px;
-    overflow-x: hidden;
+    overflow:hidden;
 }
 
-/* Effet terminal */
+/* Effet terminal rouge */
 body::before {
     content: "";
     position: fixed;
@@ -26,12 +25,12 @@ body::before {
     pointer-events:none;
     background: repeating-linear-gradient(
         to bottom,
-        rgba(255,255,255,0.02),
-        rgba(255,255,255,0.02) 2px,
+        rgba(255,0,0,0.05),
+        rgba(255,0,0,0.05) 2px,
         transparent 2px,
         transparent 4px
     );
-    animation: flicker 0.15s infinite;
+    animation: flicker 0.2s infinite;
 }
 
 @keyframes flicker {
@@ -40,128 +39,130 @@ body::before {
     100% {opacity:0.97;}
 }
 
-.container {
-    max-width: 900px;
-    margin: auto;
-}
-
-h1 {
-    font-size: 22px;
-    letter-spacing: 4px;
-    margin-bottom: 30px;
-    color: #6fd3ff;
-}
-
-.message {
-    font-size: 14px;
-    line-height: 1.7;
-    margin-bottom: 40px;
-    opacity: 0.85;
-}
-
-.symbols {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.symbols img {
-    width: 100%;
-    cursor: pointer;
-    border: 1px solid #333;
-    background: #0a0a0a;
-    padding: 10px;
-    transition: transform 0.1s, border 0.2s;
-}
-
-.symbols img:hover {
-    transform: scale(1.05);
-    border: 1px solid #6fd3ff;
-}
-
-.slots {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 25px;
-}
-
-.slot {
-    width: 60px;
-    height: 60px;
-    border: 1px solid #444;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.slot img {
-    max-width: 100%;
-    max-height: 100%;
+.screen {
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
 
 button {
-    margin-top: 15px;
-    padding: 10px 25px;
-    background: #111;
-    color: #cfcfcf;
-    border: 1px solid #444;
-    cursor: pointer;
-    letter-spacing: 1px;
+    padding: 15px 40px;
+    background: black;
+    color: gold;
+    border: 2px solid darkred;
+    font-size: 18px;
+    letter-spacing:2px;
+    cursor:pointer;
 }
 
 button:hover {
-    background: #1a1a1a;
+    background:#220000;
+}
+
+#loading {
+    margin-top:30px;
+    color: gold;
+    font-size:14px;
+    letter-spacing:2px;
+    display:none;
+}
+
+#mainContent {
+    display:none;
+    padding:40px;
+    max-width:900px;
+    margin:auto;
+}
+
+h1 {
+    color: gold;
+    letter-spacing:4px;
+}
+
+.message {
+    margin-top:30px;
+    line-height:1.8;
+    min-height:180px;
+    color:white;
+}
+
+.symbols {
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:15px;
+    margin-top:40px;
+}
+
+.symbols img {
+    width:100%;
+    cursor:pointer;
+    border:1px solid #330000;
+    background:black;
+    padding:10px;
+    transition:0.15s;
+}
+
+.symbols img:hover {
+    transform:scale(1.05);
+    border:1px solid gold;
+}
+
+.slots {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:30px;
+}
+
+.slot {
+    width:60px;
+    height:60px;
+    border:1px solid darkred;
+    background:black;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
 #result {
-    margin-top: 30px;
-    font-size: 16px;
-    opacity: 0.9;
-    color: #6fd3ff;
+    margin-top:30px;
+    color:gold;
 }
+
 </style>
 </head>
 
 <body>
-<div class="container">
 
-<h1>TRANSMISSION INTERCEPTÉE</h1>
-
-<div class="message">
-Ce message n’a pas d’auteur.<br><br>
-Il a une origine.<br><br>
-Nous ne nommons pas les individus.<br>
-Nous identifions les points de convergence.<br><br>
-Cherchez ce qui n’est ni un titre,<br>
-ni une fonction,<br>
-mais un centre autour duquel l’ordre s’organise.<br><br>
-Traduisez.<br>
-Assemblez.<br>
-Entrez ce qui demeure lorsque tout le reste disparaît.
+<div class="screen" id="startScreen">
+    <button onclick="startSequence()">DÉMARRER TRANSMISSION</button>
+    <div id="loading">Connexion sécurisée...</div>
 </div>
 
-<div class="symbols">
-    <img src="Image1.png" onclick="ajouter('A','Image1.png')">
-    <img src="Image2.png" onclick="ajouter('R','Image2.png')">
-    <img src="Image3.png" onclick="ajouter('K','Image3.png')">
-    <img src="Image4.png" onclick="ajouter('U','Image4.png')">
-    <img src="Image5.png" onclick="ajouter('S','Image5.png')">
+<div id="mainContent">
+    <h1>TRANSMISSION INTERCEPTÉE</h1>
+    <div class="message" id="typedText"></div>
+
+    <div class="symbols">
+        <img src="Image1.png" onclick="ajouter('A','Image1.png')">
+        <img src="Image2.png" onclick="ajouter('R','Image2.png')">
+        <img src="Image3.png" onclick="ajouter('K','Image3.png')">
+        <img src="Image4.png" onclick="ajouter('U','Image4.png')">
+        <img src="Image5.png" onclick="ajouter('S','Image5.png')">
+    </div>
+
+    <div class="slots">
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+
+    <div id="result"></div>
 </div>
-
-<div class="slots">
-    <div class="slot"></div>
-    <div class="slot"></div>
-    <div class="slot"></div>
-    <div class="slot"></div>
-    <div class="slot"></div>
-</div>
-
-<button id="resetBtn" onclick="reset()">RÉINITIALISER</button>
-
-<div id="result"></div>
 
 <audio id="bgMusic" src="ambience.mp3" loop></audio>
 
@@ -175,19 +176,55 @@ const soundClick = new Audio("click.mp3");
 const soundFalse = new Audio("error.mp3");
 const soundTrue = new Audio("success.mp3");
 
-bgMusic.volume = 0.25; // ambiance plus douce
+bgMusic.volume = 0.2;
 
-function startMusic() {
+const message = `Ce message n’a pas d’auteur.
+
+Il a une origine.
+
+Nous ne nommons pas les individus.
+Nous identifions les points de convergence.
+
+Cherchez ce qui n’est ni un titre,
+ni une fonction,
+mais un centre autour duquel l’ordre s’organise.
+
+Traduisez.
+Assemblez.
+Entrez ce qui demeure lorsque tout le reste disparaît.`;
+
+function startSequence() {
+    document.getElementById("loading").style.display = "block";
+
     if (!musicStarted) {
         bgMusic.play().catch(()=>{});
         musicStarted = true;
     }
+
+    setTimeout(() => {
+        document.getElementById("startScreen").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+        typeWriter();
+    }, 2000);
+}
+
+function typeWriter() {
+    let i = 0;
+    const speed = 25;
+    const target = document.getElementById("typedText");
+
+    function typing() {
+        if (i < message.length) {
+            target.innerHTML += message.charAt(i) === "\n" ? "<br>" : message.charAt(i);
+            i++;
+            setTimeout(typing, speed);
+        }
+    }
+    typing();
 }
 
 function ajouter(valeur, image) {
     if (locked || selection.length >= 5) return;
-
-    startMusic();
 
     soundClick.currentTime = 0;
     soundClick.volume = 0.6;
@@ -208,34 +245,20 @@ function verifier() {
 
     if (code === "ARKUS") {
         locked = true;
-        document.getElementById("resetBtn").style.display = "none";
         document.getElementById("result").innerText = "CANAL VALIDÉ";
 
-        fadeMusic(0.05, 500); // baisse ambiance
+        fadeMusic(0.05, 500);
 
-        soundTrue.volume = 1;
         soundTrue.play().catch(()=>{});
-
         soundTrue.onended = function() {
             window.location.href = "countdown.html";
         };
 
     } else {
-        soundFalse.volume = 0.8;
         soundFalse.play().catch(()=>{});
         document.getElementById("result").innerText =
             "Aucune correspondance valide.";
     }
-}
-
-function reset() {
-    if (locked) return;
-
-    selection = [];
-    document.getElementById("result").innerText = "";
-
-    const slots = document.getElementsByClassName("slot");
-    for (let s of slots) s.innerHTML = "";
 }
 
 function fadeMusic(target, duration) {
@@ -252,6 +275,5 @@ function fadeMusic(target, duration) {
 }
 </script>
 
-</div>
 </body>
 </html>
