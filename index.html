@@ -12,8 +12,10 @@ body {
     font-family: "Consolas", monospace;
     text-align: center;
     overflow:hidden;
+    transition: background 1.5s ease;
 }
 
+/* Scanlines rouges */
 body::before {
     content: "";
     position: fixed;
@@ -30,12 +32,28 @@ body::before {
         transparent 4px
     );
     animation: flicker 0.2s infinite;
+    transition: opacity 1.5s ease;
 }
 
 @keyframes flicker {
     0% {opacity:0.95;}
     50% {opacity:1;}
     100% {opacity:0.97;}
+}
+
+/* Activation impériale */
+body.activated {
+    background: radial-gradient(circle at center, #400000 0%, #000 70%);
+}
+
+body.activated::before {
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,0,0,0.12),
+        rgba(255,0,0,0.12) 2px,
+        transparent 2px,
+        transparent 4px
+    );
 }
 
 .screen {
@@ -91,6 +109,8 @@ h1 {
     grid-template-columns:repeat(5,1fr);
     gap:15px;
     margin-top:40px;
+    opacity:0.4;
+    pointer-events:none;
 }
 
 .symbols img {
@@ -143,7 +163,7 @@ h1 {
     <h1>TRANSMISSION INTERCEPTÉE</h1>
     <div class="message" id="typedText"></div>
 
-    <div class="symbols" id="symbolGrid" style="opacity:0.4; pointer-events:none;">
+    <div class="symbols" id="symbolGrid">
         <img src="Image1.png" onclick="ajouter('A','Image1.png')">
         <img src="Image2.png" onclick="ajouter('R','Image2.png')">
         <img src="Image3.png" onclick="ajouter('K','Image3.png')">
@@ -220,7 +240,7 @@ function typeWriter() {
         if (i < message.length) {
             if(message.charAt(i) !== "\n"){
                 soundType.currentTime = 0;
-                soundType.volume = 0.2;
+                soundType.volume = 0.15;
                 soundType.play().catch(()=>{});
             }
             target.innerHTML += message.charAt(i) === "\n" ? "<br>" : message.charAt(i);
@@ -257,10 +277,12 @@ function verifier() {
 
     if (code === "ARKUS") {
         locked = true;
+        document.body.classList.add("activated");
+
         document.getElementById("resetBtn").style.display = "none";
         document.getElementById("result").innerText = "CANAL VALIDÉ";
 
-        fadeMusic(0.05, 500);
+        fadeMusic(0.05, 800);
 
         soundTrue.play().catch(()=>{});
         soundTrue.onended = function() {
