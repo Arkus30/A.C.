@@ -13,8 +13,7 @@ body {
     text-align: center;
     overflow:hidden;
 }
-    
-/* Effet terminal rouge */
+
 body::before {
     content: "";
     position: fixed;
@@ -48,13 +47,14 @@ body::before {
 }
 
 button {
-    padding: 15px 40px;
+    padding: 12px 35px;
     background: black;
     color: gold;
     border: 2px solid darkred;
-    font-size: 18px;
+    font-size: 16px;
     letter-spacing:2px;
     cursor:pointer;
+    margin-top:20px;
 }
 
 button:hover {
@@ -65,7 +65,6 @@ button:hover {
     margin-top:30px;
     color: gold;
     font-size:14px;
-    letter-spacing:2px;
     display:none;
 }
 
@@ -84,8 +83,7 @@ h1 {
 .message {
     margin-top:30px;
     line-height:1.8;
-    min-height:180px;
-    color:white;
+    min-height:200px;
 }
 
 .symbols {
@@ -127,10 +125,10 @@ h1 {
 }
 
 #result {
-    margin-top:30px;
+    margin-top:25px;
     color:gold;
+    min-height:20px;
 }
-
 </style>
 </head>
 
@@ -145,7 +143,7 @@ h1 {
     <h1>TRANSMISSION INTERCEPTÉE</h1>
     <div class="message" id="typedText"></div>
 
-    <div class="symbols">
+    <div class="symbols" id="symbolGrid" style="opacity:0.4; pointer-events:none;">
         <img src="Image1.png" onclick="ajouter('A','Image1.png')">
         <img src="Image2.png" onclick="ajouter('R','Image2.png')">
         <img src="Image3.png" onclick="ajouter('K','Image3.png')">
@@ -161,6 +159,8 @@ h1 {
         <div class="slot"></div>
     </div>
 
+    <button id="resetBtn" onclick="reset()">RÉINITIALISER</button>
+
     <div id="result"></div>
 </div>
 
@@ -170,11 +170,14 @@ h1 {
 let selection = [];
 let locked = false;
 let musicStarted = false;
+let typingFinished = false;
 
 const bgMusic = document.getElementById("bgMusic");
 const soundClick = new Audio("click.mp3");
 const soundFalse = new Audio("error.mp3");
 const soundTrue = new Audio("success.mp3");
+const soundType = new Audio("type.mp3");
+const soundEnd = new Audio("type_end.mp3");
 
 bgMusic.volume = 0.2;
 
@@ -210,24 +213,33 @@ function startSequence() {
 
 function typeWriter() {
     let i = 0;
-    const speed = 25;
+    const speed = 20;
     const target = document.getElementById("typedText");
 
     function typing() {
         if (i < message.length) {
+            if(message.charAt(i) !== "\n"){
+                soundType.currentTime = 0;
+                soundType.volume = 0.2;
+                soundType.play().catch(()=>{});
+            }
             target.innerHTML += message.charAt(i) === "\n" ? "<br>" : message.charAt(i);
             i++;
             setTimeout(typing, speed);
+        } else {
+            typingFinished = true;
+            soundEnd.play().catch(()=>{});
+            document.getElementById("symbolGrid").style.opacity = "1";
+            document.getElementById("symbolGrid").style.pointerEvents = "auto";
         }
     }
     typing();
 }
 
 function ajouter(valeur, image) {
-    if (locked || selection.length >= 5) return;
+    if (!typingFinished || locked || selection.length >= 5) return;
 
     soundClick.currentTime = 0;
-    soundClick.volume = 0.6;
     soundClick.play().catch(()=>{});
 
     selection.push(valeur);
@@ -245,6 +257,7 @@ function verifier() {
 
     if (code === "ARKUS") {
         locked = true;
+        document.getElementById("resetBtn").style.display = "none";
         document.getElementById("result").innerText = "CANAL VALIDÉ";
 
         fadeMusic(0.05, 500);
@@ -257,8 +270,20 @@ function verifier() {
     } else {
         soundFalse.play().catch(()=>{});
         document.getElementById("result").innerText =
-            "Aucune correspondance valide.";
+            "Correspondance invalide.";
+
+        setTimeout(reset, 1500);
     }
+}
+
+function reset() {
+    if (locked) return;
+
+    selection = [];
+    document.getElementById("result").innerText = "";
+
+    const slots = document.getElementsByClassName("slot");
+    for (let s of slots) s.innerHTML = "";
 }
 
 function fadeMusic(target, duration) {
