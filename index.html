@@ -177,7 +177,7 @@ function ajouter(valeur, image) {
 function verifier() {
     const code = selection.join("");
 
-        if (code === "ARKUS") {
+    if (code === "ARKUS") {
         locked = true;
 
         document.getElementById("resetBtn").style.display = "none";
@@ -185,8 +185,9 @@ function verifier() {
 
         soundTrue.play().catch(()=>{});
 
-        soundTrue.onended = function() {
+        setTimeout(() => {
             window.location.href = "countdown.html";
+        }, 6000);
 
     } else {
         soundFalse.play().catch(()=>{});
