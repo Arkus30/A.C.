@@ -6,159 +6,153 @@
 
 <style>
 body {
-    margin:0;
-    height:100vh;
-    background: radial-gradient(circle at center, #400000 0%, #000 70%);
-    color:white;
-    font-family:"Consolas", monospace;
-    overflow:hidden;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    text-align:center;
+    margin: 0;
+    height: 100vh;
+    background: radial-gradient(circle at center, #1a0000 0%, #000 70%);
+    overflow: hidden;
+    color: #ffffff;
+    font-family: "Segoe UI", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     animation: pulseImperial 6s ease-in-out infinite;
 }
 
-/* Pulsation lente du fond */
+/* Pulsation lente normale */
 @keyframes pulseImperial {
-    0% { background: radial-gradient(circle at center, #350000 0%, #000 70%); }
-    50% { background: radial-gradient(circle at center, #600000 0%, #000 75%); }
-    100% { background: radial-gradient(circle at center, #350000 0%, #000 70%); }
+    0% { box-shadow: inset 0 0 80px rgba(255,0,0,0.2); }
+    50% { box-shadow: inset 0 0 160px rgba(255,0,0,0.4); }
+    100% { box-shadow: inset 0 0 80px rgba(255,0,0,0.2); }
 }
 
-.container { z-index:2; }
+/* Pulsation rapide dramatique */
+@keyframes pulseCritical {
+    0% { box-shadow: inset 0 0 120px rgba(255,0,0,0.4); }
+    50% { box-shadow: inset 0 0 260px rgba(255,0,0,0.8); }
+    100% { box-shadow: inset 0 0 120px rgba(255,0,0,0.4); }
+}
+
+.overlay {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(255,255,255,0.03),
+        rgba(255,255,255,0.03) 1px,
+        transparent 1px,
+        transparent 4px
+    );
+    animation: scan 12s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scan {
+    from { transform: translateY(0); }
+    to { transform: translateY(-50%); }
+}
+
+.content {
+    text-align: center;
+    z-index: 2;
+}
 
 .label {
-    letter-spacing:4px;
-    font-size:14px;
-    color:gold;
-    margin-bottom:20px;
+    letter-spacing: 4px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    opacity: 0.7;
 }
 
 #countdown {
-    font-size:42px;
-    letter-spacing:4px;
-    margin-top:20px;
-    text-shadow: 0 0 5px white;
-    transition: all 0.5s ease;
+    font-size: 42px;
+    letter-spacing: 4px;
+    transition: color 1s ease, text-shadow 1s ease;
 }
 
-/* Mode dernière heure */
 .lastHour {
-    color:red !important;
-    text-shadow: 0 0 15px red, 0 0 30px darkred;
-    animation: pulseCritical 2s ease-in-out infinite;
-}
-
-@keyframes pulseCritical {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    color: #ff2a2a;
+    text-shadow: 0 0 20px rgba(255,0,0,0.8);
 }
 
 button {
-    padding:12px 35px;
-    background:black;
-    color:gold;
-    border:2px solid darkred;
-    font-size:16px;
-    letter-spacing:2px;
-    cursor:pointer;
+    padding: 12px 30px;
+    background: #200000;
+    border: 1px solid #aa0000;
+    color: white;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin-top: 30px;
 }
 
-button:hover { background:#220000; }
-
-#sync {
-    margin-top:20px;
-    color:gold;
-    font-size:14px;
-    display:none;
+button:hover {
+    background: #400000;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="overlay"></div>
 
-    <div id="initScreen">
-        <button onclick="startCountdown()">INITIALISER COMPTE À REBOURS</button>
-        <div id="sync">Synchronisation du canal...</div>
-    </div>
-
-    <div id="countdownScreen" style="display:none;">
-        <div class="label">TRANSMISSION PROGRAMMÉE</div>
-        <div id="countdown">--J --H --M --S</div>
-    </div>
-
+<div class="content">
+    <div class="label">TRANSMISSION PROGRAMMÉE</div>
+    <div id="countdown">--J --H --M --S</div>
+    <button onclick="startCountdown()">INITIALISER LA TRANSMISSION</button>
 </div>
 
+<!-- Musiques -->
 <audio id="normalMusic" src="countdown_ambience.mp3" loop></audio>
 <audio id="criticalMusic" src="countdown_critical.mp3" loop></audio>
 
+<!-- Son final -->
+<audio id="finalSound" src="transmission_open.mp3"></audio>
+
 <script>
-
-// =============================
-// 🔧 DATE CIBLE
-// =============================
-
-// 🎯 DATE OFFICIELLE
-//let dateCible = new Date("2026-06-01T20:00:00").getTime();
-
-// =============================
-// 🧪 MODE TEST (décommente pour test rapide)
-// =============================
-let dateCible = new Date().getTime() + (65 * 60 * 1000); // 2 minutes
-// let dateCible = new Date().getTime() + (30 * 1000); // 30 secondes
-
-// =============================
+const dateCible = new Date("2026-06-01T20:00:00").getTime();
 
 const normalMusic = document.getElementById("normalMusic");
 const criticalMusic = document.getElementById("criticalMusic");
-
-normalMusic.volume = 0.25;
-criticalMusic.volume = 0.35;
+const finalSound = document.getElementById("finalSound");
 
 let intervalID;
-let criticalTriggered = false;
 
 function startCountdown() {
-    document.getElementById("sync").style.display = "block";
+    document.querySelector("button").style.display = "none";
 
+    normalMusic.volume = 0.35;
+    criticalMusic.volume = 0.5;
     normalMusic.play().catch(()=>{});
 
-    setTimeout(() => {
-        document.getElementById("initScreen").style.display = "none";
-        document.getElementById("countdownScreen").style.display = "block";
-        lancerCompte();
-    }, 2000);
+    lancerCompte();
 }
 
 function lancerCompte() {
-
     intervalID = setInterval(() => {
-
         const maintenant = new Date().getTime();
         const distance = dateCible - maintenant;
 
         if (distance <= 0) {
             clearInterval(intervalID);
-            document.getElementById("countdown").innerHTML =
-                "TRANSMISSION OUVERTE";
+
+            const countdown = document.getElementById("countdown");
+            countdown.innerHTML = "TRANSMISSION OUVERTE";
+            countdown.classList.remove("lastHour");
+
             normalMusic.pause();
             criticalMusic.pause();
+
+            // Accélération dramatique
+            document.body.style.animation = "pulseCritical 1.5s ease-in-out infinite";
+
+            finalSound.volume = 0.8;
+            finalSound.play().catch(()=>{});
+
+            finalSound.onended = function() {
+                window.location.href = "https://www.youtube.com/watch?v=TON_ID_VIDEO";
+            };
+
             return;
-        }
-
-        // 🔥 ACTIVATION DERNIÈRE HEURE
-        if (distance <= 3600000 && !criticalTriggered) {
-            criticalTriggered = true;
-
-            document.getElementById("countdown").classList.add("lastHour");
-
-            normalMusic.pause();
-            criticalMusic.currentTime = 0;
-            criticalMusic.play().catch(()=>{});
         }
 
         const j = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -168,6 +162,16 @@ function lancerCompte() {
 
         document.getElementById("countdown").innerHTML =
             j + "J " + h + "H " + m + "M " + s + "S";
+
+        // Dernière heure
+        if (distance <= 3600000) {
+            document.getElementById("countdown").classList.add("lastHour");
+
+            if (!criticalMusic.playing) {
+                normalMusic.pause();
+                criticalMusic.play().catch(()=>{});
+            }
+        }
 
     }, 1000);
 }
