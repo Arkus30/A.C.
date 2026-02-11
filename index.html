@@ -6,12 +6,38 @@
 
 <style>
 body {
-    background: radial-gradient(circle at center, #0a0a0a 0%, #000 80%);
+    margin:0;
+    background: radial-gradient(circle at center, #0a0f14 0%, #000 80%);
     color: #cfcfcf;
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Consolas", monospace;
     text-align: center;
     padding: 40px;
     overflow-x: hidden;
+}
+
+/* Effet terminal */
+body::before {
+    content: "";
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.02),
+        rgba(255,255,255,0.02) 2px,
+        transparent 2px,
+        transparent 4px
+    );
+    animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+    0% {opacity:0.95;}
+    50% {opacity:1;}
+    100% {opacity:0.97;}
 }
 
 .container {
@@ -21,8 +47,9 @@ body {
 
 h1 {
     font-size: 22px;
-    letter-spacing: 3px;
+    letter-spacing: 4px;
     margin-bottom: 30px;
+    color: #6fd3ff;
 }
 
 .message {
@@ -50,7 +77,7 @@ h1 {
 
 .symbols img:hover {
     transform: scale(1.05);
-    border: 1px solid #666;
+    border: 1px solid #6fd3ff;
 }
 
 .slots {
@@ -93,6 +120,7 @@ button:hover {
     margin-top: 30px;
     font-size: 16px;
     opacity: 0.9;
+    color: #6fd3ff;
 }
 </style>
 </head>
@@ -135,7 +163,6 @@ Entrez ce qui demeure lorsque tout le reste disparaît.
 
 <div id="result"></div>
 
-<!-- AUDIO -->
 <audio id="bgMusic" src="ambience.mp3" loop></audio>
 
 <script>
@@ -148,9 +175,10 @@ const soundClick = new Audio("click.mp3");
 const soundFalse = new Audio("error.mp3");
 const soundTrue = new Audio("success.mp3");
 
+bgMusic.volume = 0.25; // ambiance plus douce
+
 function startMusic() {
     if (!musicStarted) {
-        bgMusic.volume = 0.4;
         bgMusic.play().catch(()=>{});
         musicStarted = true;
     }
@@ -162,6 +190,7 @@ function ajouter(valeur, image) {
     startMusic();
 
     soundClick.currentTime = 0;
+    soundClick.volume = 0.6;
     soundClick.play().catch(()=>{});
 
     selection.push(valeur);
@@ -179,17 +208,20 @@ function verifier() {
 
     if (code === "ARKUS") {
         locked = true;
-
         document.getElementById("resetBtn").style.display = "none";
-        document.getElementById("result").innerText = "Correspondance confirmée.";
+        document.getElementById("result").innerText = "CANAL VALIDÉ";
 
+        fadeMusic(0.05, 500); // baisse ambiance
+
+        soundTrue.volume = 1;
         soundTrue.play().catch(()=>{});
 
-        setTimeout(() => {
+        soundTrue.onended = function() {
             window.location.href = "countdown.html";
-        }, 6000);
+        };
 
     } else {
+        soundFalse.volume = 0.8;
         soundFalse.play().catch(()=>{});
         document.getElementById("result").innerText =
             "Aucune correspondance valide.";
@@ -204,6 +236,19 @@ function reset() {
 
     const slots = document.getElementsByClassName("slot");
     for (let s of slots) s.innerHTML = "";
+}
+
+function fadeMusic(target, duration) {
+    let step = 0.01;
+    let interval = duration / ((bgMusic.volume - target) / step);
+
+    let fade = setInterval(() => {
+        if (bgMusic.volume > target) {
+            bgMusic.volume = Math.max(bgMusic.volume - step, target);
+        } else {
+            clearInterval(fade);
+        }
+    }, interval);
 }
 </script>
 
