@@ -19,47 +19,14 @@ body {
     animation: pulseImperial 6s ease-in-out infinite;
 }
 
-/* Pulsation impériale lente du fond */
+/* Pulsation lente du fond */
 @keyframes pulseImperial {
-    0% {
-        background: radial-gradient(circle at center, #350000 0%, #000 70%);
-    }
-    50% {
-        background: radial-gradient(circle at center, #600000 0%, #000 75%);
-    }
-    100% {
-        background: radial-gradient(circle at center, #350000 0%, #000 70%);
-    }
+    0% { background: radial-gradient(circle at center, #350000 0%, #000 70%); }
+    50% { background: radial-gradient(circle at center, #600000 0%, #000 75%); }
+    100% { background: radial-gradient(circle at center, #350000 0%, #000 70%); }
 }
 
-/* Scanlines rouges */
-body::before {
-    content:"";
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    pointer-events:none;
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,0,0,0.12),
-        rgba(255,0,0,0.12) 2px,
-        transparent 2px,
-        transparent 4px
-    );
-    animation:flicker 0.2s infinite;
-}
-
-@keyframes flicker {
-    0% {opacity:0.95;}
-    50% {opacity:1;}
-    100% {opacity:0.97;}
-}
-
-.container {
-    z-index:2;
-}
+.container { z-index:2; }
 
 .label {
     letter-spacing:4px;
@@ -68,28 +35,25 @@ body::before {
     margin-bottom:20px;
 }
 
-/* Pulsation du timer */
 #countdown {
     font-size:42px;
     letter-spacing:4px;
     margin-top:20px;
-    animation: pulseTimer 4s ease-in-out infinite;
-    text-shadow: 0 0 5px red;
+    text-shadow: 0 0 5px white;
+    transition: all 0.5s ease;
 }
 
-@keyframes pulseTimer {
-    0% {
-        transform: scale(1);
-        text-shadow: 0 0 5px #600000;
-    }
-    50% {
-        transform: scale(1.05);
-        text-shadow: 0 0 20px red, 0 0 40px darkred;
-    }
-    100% {
-        transform: scale(1);
-        text-shadow: 0 0 5px #600000;
-    }
+/* Mode dernière heure */
+.lastHour {
+    color:red !important;
+    text-shadow: 0 0 15px red, 0 0 30px darkred;
+    animation: pulseCritical 2s ease-in-out infinite;
+}
+
+@keyframes pulseCritical {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 button {
@@ -102,9 +66,7 @@ button {
     cursor:pointer;
 }
 
-button:hover {
-    background:#220000;
-}
+button:hover { background:#220000; }
 
 #sync {
     margin-top:20px;
@@ -131,20 +93,39 @@ button:hover {
 
 </div>
 
-<audio id="bgMusic" src="countdown_ambience.mp3" loop></audio>
+<audio id="normalMusic" src="countdown_ambience.mp3" loop></audio>
+<audio id="criticalMusic" src="countdown_critical.mp3" loop></audio>
 
 <script>
-const bgMusic = document.getElementById("bgMusic");
-bgMusic.volume = 0.25;
 
-const dateCible = new Date("2026-06-01T20:00:00").getTime();
+// =============================
+// 🔧 DATE CIBLE
+// =============================
+
+// 🎯 DATE OFFICIELLE
+//let dateCible = new Date("2026-06-01T20:00:00").getTime();
+
+// =============================
+// 🧪 MODE TEST (décommente pour test rapide)
+// =============================
+let dateCible = new Date().getTime() + (65 * 60 * 1000); // 2 minutes
+// let dateCible = new Date().getTime() + (30 * 1000); // 30 secondes
+
+// =============================
+
+const normalMusic = document.getElementById("normalMusic");
+const criticalMusic = document.getElementById("criticalMusic");
+
+normalMusic.volume = 0.25;
+criticalMusic.volume = 0.35;
 
 let intervalID;
+let criticalTriggered = false;
 
 function startCountdown() {
     document.getElementById("sync").style.display = "block";
 
-    bgMusic.play().catch(()=>{});
+    normalMusic.play().catch(()=>{});
 
     setTimeout(() => {
         document.getElementById("initScreen").style.display = "none";
@@ -154,15 +135,30 @@ function startCountdown() {
 }
 
 function lancerCompte() {
+
     intervalID = setInterval(() => {
+
         const maintenant = new Date().getTime();
         const distance = dateCible - maintenant;
 
-        if (distance < 0) {
+        if (distance <= 0) {
             clearInterval(intervalID);
             document.getElementById("countdown").innerHTML =
                 "TRANSMISSION OUVERTE";
+            normalMusic.pause();
+            criticalMusic.pause();
             return;
+        }
+
+        // 🔥 ACTIVATION DERNIÈRE HEURE
+        if (distance <= 3600000 && !criticalTriggered) {
+            criticalTriggered = true;
+
+            document.getElementById("countdown").classList.add("lastHour");
+
+            normalMusic.pause();
+            criticalMusic.currentTime = 0;
+            criticalMusic.play().catch(()=>{});
         }
 
         const j = Math.floor(distance / (1000 * 60 * 60 * 24));
