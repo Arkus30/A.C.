@@ -16,6 +16,20 @@ body {
     justify-content:center;
     align-items:center;
     text-align:center;
+    animation: pulseImperial 6s ease-in-out infinite;
+}
+
+/* Pulsation impériale lente */
+@keyframes pulseImperial {
+    0% {
+        background: radial-gradient(circle at center, #350000 0%, #000 70%);
+    }
+    50% {
+        background: radial-gradient(circle at center, #600000 0%, #000 75%);
+    }
+    100% {
+        background: radial-gradient(circle at center, #350000 0%, #000 70%);
+    }
 }
 
 /* Scanlines rouges */
