@@ -19,7 +19,7 @@ body {
     animation: pulseImperial 6s ease-in-out infinite;
 }
 
-/* Pulsation impériale lente */
+/* Pulsation impériale lente du fond */
 @keyframes pulseImperial {
     0% {
         background: radial-gradient(circle at center, #350000 0%, #000 70%);
@@ -68,10 +68,28 @@ body::before {
     margin-bottom:20px;
 }
 
+/* Pulsation du timer */
 #countdown {
     font-size:42px;
     letter-spacing:4px;
     margin-top:20px;
+    animation: pulseTimer 4s ease-in-out infinite;
+    text-shadow: 0 0 5px red;
+}
+
+@keyframes pulseTimer {
+    0% {
+        transform: scale(1);
+        text-shadow: 0 0 5px #600000;
+    }
+    50% {
+        transform: scale(1.05);
+        text-shadow: 0 0 20px red, 0 0 40px darkred;
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 0 0 5px #600000;
+    }
 }
 
 button {
