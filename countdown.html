@@ -109,7 +109,7 @@ button:hover {
 <audio id="finalSound" src="transmission_open.mp3"></audio>
 
 <script>
-const dateCible = new Date("2026-06-01T20:00:00").getTime();
+const dateCible = new Date().getTime() + 20000;
 
 const normalMusic = document.getElementById("normalMusic");
 const criticalMusic = document.getElementById("criticalMusic");
@@ -149,7 +149,7 @@ function lancerCompte() {
             finalSound.play().catch(()=>{});
 
             finalSound.onended = function() {
-                window.location.href = "https://www.youtube.com/watch?v=TON_ID_VIDEO";
+                window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
             };
 
             return;
