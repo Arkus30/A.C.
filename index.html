@@ -12,48 +12,10 @@ body {
     font-family: "Consolas", monospace;
     text-align: center;
     overflow:hidden;
-    transition: background 1.5s ease;
 }
 
-/* Scanlines rouges */
-body::before {
-    content: "";
-    position: fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    pointer-events:none;
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,0,0,0.05),
-        rgba(255,0,0,0.05) 2px,
-        transparent 2px,
-        transparent 4px
-    );
-    animation: flicker 0.2s infinite;
-    transition: opacity 1.5s ease;
-}
-
-@keyframes flicker {
-    0% {opacity:0.95;}
-    50% {opacity:1;}
-    100% {opacity:0.97;}
-}
-
-/* Activation impériale */
 body.activated {
     background: radial-gradient(circle at center, #400000 0%, #000 70%);
-}
-
-body.activated::before {
-    background: repeating-linear-gradient(
-        to bottom,
-        rgba(255,0,0,0.12),
-        rgba(255,0,0,0.12) 2px,
-        transparent 2px,
-        transparent 4px
-    );
 }
 
 .screen {
@@ -64,67 +26,39 @@ body.activated::before {
     height:100vh;
 }
 
-button {
-    padding: 12px 35px;
-    background: black;
-    color: gold;
-    border: 2px solid darkred;
-    font-size: 16px;
-    letter-spacing:2px;
-    cursor:pointer;
-    margin-top:20px;
-}
-
-button:hover {
-    background:#220000;
-}
-
-#loading {
-    margin-top:30px;
-    color: gold;
-    font-size:14px;
-    display:none;
-}
-
 #mainContent {
     display:none;
     padding:40px;
-    max-width:900px;
-    margin:auto;
 }
 
-h1 {
-    color: gold;
-    letter-spacing:4px;
-}
+h1 { color: gold; letter-spacing:4px; }
 
-.message {
-    margin-top:30px;
-    line-height:1.8;
-    min-height:200px;
-}
+.message { margin-top:30px; line-height:1.8; }
 
-.symbols {
+.grid {
     display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:15px;
+    grid-template-columns:repeat(6,80px);
+    grid-template-rows:repeat(6,80px);
+    gap:8px;
+    justify-content:center;
     margin-top:40px;
     opacity:0.4;
     pointer-events:none;
 }
 
-.symbols img {
-    width:100%;
-    cursor:pointer;
-    border:1px solid #330000;
+.grid img {
+    width:80px;
+    height:80px;
     background:black;
-    padding:10px;
-    transition:0.15s;
+    padding:8px;
+    border:1px solid #330000;
+    cursor:pointer;
+    transition:0.2s;
 }
 
-.symbols img:hover {
-    transform:scale(1.05);
+.grid img:hover {
     border:1px solid gold;
+    transform:scale(1.05);
 }
 
 .slots {
@@ -144,10 +78,13 @@ h1 {
     justify-content:center;
 }
 
-#result {
-    margin-top:25px;
+button {
+    margin-top:20px;
+    padding:10px 30px;
+    background:black;
+    border:1px solid darkred;
     color:gold;
-    min-height:20px;
+    cursor:pointer;
 }
 </style>
 </head>
@@ -155,21 +92,17 @@ h1 {
 <body>
 
 <div class="screen" id="startScreen">
-    <button onclick="startSequence()">DÉMARRER TRANSMISSION</button>
-    <div id="loading">Connexion sécurisée...</div>
+    <button onclick="start()">DÉMARRER TRANSMISSION</button>
 </div>
 
 <div id="mainContent">
     <h1>TRANSMISSION INTERCEPTÉE</h1>
-    <div class="message" id="typedText"></div>
-
-    <div class="symbols" id="symbolGrid">
-        <img src="Image1.png" onclick="ajouter('A','Image1.png')">
-        <img src="Image2.png" onclick="ajouter('R','Image2.png')">
-        <img src="Image3.png" onclick="ajouter('K','Image3.png')">
-        <img src="Image4.png" onclick="ajouter('U','Image4.png')">
-        <img src="Image5.png" onclick="ajouter('S','Image5.png')">
+    <div class="message">
+        Cherchez ce qui demeure lorsque tout le reste se répète.<br>
+        Le centre précède la périphérie.
     </div>
+
+    <div class="grid" id="grid"></div>
 
     <div class="slots">
         <div class="slot"></div>
@@ -179,147 +112,140 @@ h1 {
         <div class="slot"></div>
     </div>
 
-    <button id="resetBtn" onclick="reset()">RÉINITIALISER</button>
+    <button onclick="reset()">RÉINITIALISER</button>
 
-    <div id="result"></div>
+    <div id="result" style="margin-top:20px;color:gold;"></div>
 </div>
 
-<audio id="bgMusic" src="ambience.mp3" loop></audio>
-
 <script>
+
+const centreX = 2.5;
+const centreY = 2.5;
+
 let selection = [];
 let locked = false;
-let musicStarted = false;
-let typingFinished = false;
 
-const bgMusic = document.getElementById("bgMusic");
-const soundClick = new Audio("click.mp3");
-const soundFalse = new Audio("error.mp3");
-const soundTrue = new Audio("success.mp3");
-const soundType = new Audio("type.mp3");
-const soundEnd = new Audio("type_end.mp3");
+// ===== SYMBOLS =====
 
-bgMusic.volume = 0.2;
+// 5 uniques positionnés exactement
+const uniques = {
+    "2-3": {letter:"A", img:"Image1.png"},
+    "1-2": {letter:"R", img:"Image2.png"},
+    "0-1": {letter:"K", img:"Image3.png"},
+    "4-5": {letter:"U", img:"Image4.png"},
+    "5-5": {letter:"S", img:"Image5.png"}
+};
 
-const message = `Ce message n’a pas d’auteur.
+// 15 paires + 1 paire bonus
+const duplicates = [
+    "D1.png","D1.png",
+    "D2.png","D2.png",
+    "D3.png","D3.png",
+    "D4.png","D4.png",
+    "D5.png","D5.png",
+    "D6.png","D6.png",
+    "D7.png","D7.png",
+    "D8.png","D8.png",
+    "D9.png","D9.png",
+    "D10.png","D10.png",
+    "D11.png","D11.png",
+    "D12.png","D12.png",
+    "D13.png","D13.png",
+    "D14.png","D14.png",
+    "D15.png","D15.png",
+    "D16.png","D16.png"
+];
 
-Il a une origine.
+let dupIndex = 0;
 
-Nous ne nommons pas les individus.
-Nous identifions les points de convergence.
-
-Cherchez ce qui n’est ni un titre,
-ni une fonction,
-mais un centre autour duquel l’ordre s’organise.
-
-Traduisez.
-Assemblez.
-Entrez ce qui demeure lorsque tout le reste disparaît.`;
-
-function startSequence() {
-    document.getElementById("loading").style.display = "block";
-
-    if (!musicStarted) {
-        bgMusic.play().catch(()=>{});
-        musicStarted = true;
-    }
-
-    setTimeout(() => {
-        document.getElementById("startScreen").style.display = "none";
-        document.getElementById("mainContent").style.display = "block";
-        typeWriter();
-    }, 2000);
+function start(){
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("mainContent").style.display="block";
+    generateGrid();
 }
 
-function typeWriter() {
-    let i = 0;
-    const speed = 20;
-    const target = document.getElementById("typedText");
+function generateGrid(){
+    const grid = document.getElementById("grid");
 
-    function typing() {
-        if (i < message.length) {
-            if(message.charAt(i) !== "\n"){
-                soundType.currentTime = 0;
-                soundType.volume = 0.15;
-                soundType.play().catch(()=>{});
+    for(let row=0; row<6; row++){
+        for(let col=0; col<6; col++){
+
+            const key = row+"-"+col;
+            const img = document.createElement("img");
+
+            if(uniques[key]){
+                img.src = uniques[key].img;
+                img.dataset.letter = uniques[key].letter;
+                img.dataset.row = row;
+                img.dataset.col = col;
+                img.onclick = selectUnique;
+            } else {
+                img.src = duplicates[dupIndex];
+                dupIndex++;
             }
-            target.innerHTML += message.charAt(i) === "\n" ? "<br>" : message.charAt(i);
-            i++;
-            setTimeout(typing, speed);
-        } else {
-            typingFinished = true;
-            soundEnd.play().catch(()=>{});
-            document.getElementById("symbolGrid").style.opacity = "1";
-            document.getElementById("symbolGrid").style.pointerEvents = "auto";
+
+            grid.appendChild(img);
         }
     }
-    typing();
+
+    grid.style.opacity="1";
+    grid.style.pointerEvents="auto";
 }
 
-function ajouter(valeur, image) {
-    if (!typingFinished || locked || selection.length >= 5) return;
+function selectUnique(){
+    if(locked || selection.length>=5) return;
 
-    soundClick.currentTime = 0;
-    soundClick.play().catch(()=>{});
+    const letter = this.dataset.letter;
+    const row = parseInt(this.dataset.row);
+    const col = parseInt(this.dataset.col);
 
-    selection.push(valeur);
+    selection.push({
+        letter:letter,
+        distance: Math.sqrt(
+            Math.pow(row-centreX,2)+
+            Math.pow(col-centreY,2)
+        )
+    });
 
-    const slot = document.getElementsByClassName("slot")[selection.length - 1];
-    const img = document.createElement("img");
-    img.src = image;
-    slot.appendChild(img);
+    const slot = document.getElementsByClassName("slot")[selection.length-1];
+    const clone = this.cloneNode(true);
+    slot.appendChild(clone);
 
-    if (selection.length === 5) verifier();
+    if(selection.length===5) verify();
 }
 
-function verifier() {
-    const code = selection.join("");
+function verify(){
 
-    if (code === "ARKUS") {
-        locked = true;
+    // tri par distance croissante
+    selection.sort((a,b)=>a.distance-b.distance);
+
+    const result = selection.map(s=>s.letter).join("");
+
+    if(result==="ARKUS"){
+        locked=true;
         document.body.classList.add("activated");
+        document.getElementById("result").innerText="CANAL VALIDÉ";
 
-        document.getElementById("resetBtn").style.display = "none";
-        document.getElementById("result").innerText = "CANAL VALIDÉ";
-
-        fadeMusic(0.05, 800);
-
-        soundTrue.play().catch(()=>{});
-        soundTrue.onended = function() {
-            window.location.href = "countdown.html";
-        };
+        setTimeout(()=>{
+            window.location.href="countdown.html";
+        },2000);
 
     } else {
-        soundFalse.play().catch(()=>{});
-        document.getElementById("result").innerText =
-            "Correspondance invalide.";
-
-        setTimeout(reset, 1500);
+        document.getElementById("result").innerText="Correspondance invalide.";
+        setTimeout(reset,1500);
     }
 }
 
-function reset() {
-    if (locked) return;
+function reset(){
+    if(locked) return;
 
-    selection = [];
-    document.getElementById("result").innerText = "";
+    selection=[];
+    document.getElementById("result").innerText="";
 
-    const slots = document.getElementsByClassName("slot");
-    for (let s of slots) s.innerHTML = "";
+    const slots=document.getElementsByClassName("slot");
+    for(let s of slots) s.innerHTML="";
 }
 
-function fadeMusic(target, duration) {
-    let step = 0.01;
-    let interval = duration / ((bgMusic.volume - target) / step);
-
-    let fade = setInterval(() => {
-        if (bgMusic.volume > target) {
-            bgMusic.volume = Math.max(bgMusic.volume - step, target);
-        } else {
-            clearInterval(fade);
-        }
-    }, interval);
-}
 </script>
 
 </body>
