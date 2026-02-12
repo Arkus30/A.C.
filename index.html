@@ -12,10 +12,46 @@ body {
     font-family: "Consolas", monospace;
     text-align: center;
     overflow:hidden;
+    transition: background 1.5s ease;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,0,0,0.05),
+        rgba(255,0,0,0.05) 2px,
+        transparent 2px,
+        transparent 4px
+    );
+    animation: flicker 0.2s infinite;
+    transition: opacity 1.5s ease;
+}
+
+@keyframes flicker {
+    0% {opacity:0.95;}
+    50% {opacity:1;}
+    100% {opacity:0.97;}
 }
 
 body.activated {
     background: radial-gradient(circle at center, #400000 0%, #000 70%);
+}
+
+body.activated::before {
+    background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,0,0,0.12),
+        rgba(255,0,0,0.12) 2px,
+        transparent 2px,
+        transparent 4px
+    );
 }
 
 .screen {
@@ -26,39 +62,67 @@ body.activated {
     height:100vh;
 }
 
+button {
+    padding: 12px 35px;
+    background: black;
+    color: gold;
+    border: 2px solid darkred;
+    font-size: 16px;
+    letter-spacing:2px;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+button:hover { background:#220000; }
+
+#loading {
+    margin-top:30px;
+    color: gold;
+    font-size:14px;
+    display:none;
+}
+
 #mainContent {
     display:none;
     padding:40px;
+    max-width:1000px;
+    margin:auto;
 }
 
 h1 { color: gold; letter-spacing:4px; }
 
-.message { margin-top:30px; line-height:1.8; }
+.message {
+    margin-top:30px;
+    line-height:1.8;
+    min-height:200px;
+}
 
-.grid {
+/* ===== NOUVELLE GRILLE 6x6 ===== */
+
+.symbols {
     display:grid;
-    grid-template-columns:repeat(6,80px);
-    grid-template-rows:repeat(6,80px);
-    gap:8px;
-    justify-content:center;
+    grid-template-columns:repeat(6,90px);
+    grid-template-rows:repeat(6,90px);
+    gap:10px;
     margin-top:40px;
     opacity:0.4;
     pointer-events:none;
+    justify-content:center;
 }
 
-.grid img {
-    width:80px;
-    height:80px;
-    background:black;
-    padding:8px;
-    border:1px solid #330000;
+.symbols img {
+    width:90px;
+    height:90px;
     cursor:pointer;
-    transition:0.2s;
+    border:1px solid #330000;
+    background:black;
+    padding:10px;
+    transition:0.15s;
 }
 
-.grid img:hover {
-    border:1px solid gold;
+.symbols img:hover {
     transform:scale(1.05);
+    border:1px solid gold;
 }
 
 .slots {
@@ -78,13 +142,10 @@ h1 { color: gold; letter-spacing:4px; }
     justify-content:center;
 }
 
-button {
-    margin-top:20px;
-    padding:10px 30px;
-    background:black;
-    border:1px solid darkred;
+#result {
+    margin-top:25px;
     color:gold;
-    cursor:pointer;
+    min-height:20px;
 }
 </style>
 </head>
@@ -92,17 +153,15 @@ button {
 <body>
 
 <div class="screen" id="startScreen">
-    <button onclick="start()">DÉMARRER TRANSMISSION</button>
+    <button onclick="startSequence()">DÉMARRER TRANSMISSION</button>
+    <div id="loading">Connexion sécurisée...</div>
 </div>
 
 <div id="mainContent">
     <h1>TRANSMISSION INTERCEPTÉE</h1>
-    <div class="message">
-        Cherchez ce qui demeure lorsque tout le reste se répète.<br>
-        Le centre précède la périphérie.
-    </div>
+    <div class="message" id="typedText"></div>
 
-    <div class="grid" id="grid"></div>
+    <div class="symbols" id="symbolGrid"></div>
 
     <div class="slots">
         <div class="slot"></div>
@@ -112,22 +171,48 @@ button {
         <div class="slot"></div>
     </div>
 
-    <button onclick="reset()">RÉINITIALISER</button>
+    <button id="resetBtn" onclick="reset()">RÉINITIALISER</button>
 
-    <div id="result" style="margin-top:20px;color:gold;"></div>
+    <div id="result"></div>
 </div>
 
+<audio id="bgMusic" src="ambience.mp3" loop></audio>
+
 <script>
+let selection = [];
+let locked = false;
+let musicStarted = false;
+let typingFinished = false;
 
 const centreX = 2.5;
 const centreY = 2.5;
 
-let selection = [];
-let locked = false;
+const bgMusic = document.getElementById("bgMusic");
+const soundClick = new Audio("click.mp3");
+const soundFalse = new Audio("error.mp3");
+const soundTrue = new Audio("success.mp3");
+const soundType = new Audio("type.mp3");
+const soundEnd = new Audio("type_end.mp3");
 
-// ===== SYMBOLS =====
+bgMusic.volume = 0.2;
 
-// 5 uniques positionnés exactement
+const message = `Ce message n’a pas d’auteur.
+
+Il a une origine.
+
+Nous ne nommons pas les individus.
+Nous identifions les points de convergence.
+
+Cherchez ce qui n’est ni un titre,
+ni une fonction,
+mais un centre autour duquel l’ordre s’organise.
+
+Traduisez.
+Assemblez.
+Entrez ce qui demeure lorsque tout le reste disparaît.`;
+
+/* ===== SYMBOLS FIXES ===== */
+
 const uniques = {
     "2-3": {letter:"A", img:"Image1.png"},
     "1-2": {letter:"R", img:"Image2.png"},
@@ -136,116 +221,147 @@ const uniques = {
     "5-5": {letter:"S", img:"Image5.png"}
 };
 
-// 15 paires + 1 paire bonus
-const duplicates = [
-    "D1.png","D1.png",
-    "D2.png","D2.png",
-    "D3.png","D3.png",
-    "D4.png","D4.png",
-    "D5.png","D5.png",
-    "D6.png","D6.png",
-    "D7.png","D7.png",
-    "D8.png","D8.png",
-    "D9.png","D9.png",
-    "D10.png","D10.png",
-    "D11.png","D11.png",
-    "D12.png","D12.png",
-    "D13.png","D13.png",
-    "D14.png","D14.png",
-    "D15.png","D15.png",
-    "D16.png","D16.png"
-];
+const duplicates = [];
+for(let i=1;i<=16;i++){
+    duplicates.push("D"+i+".png");
+    duplicates.push("D"+i+".png");
+}
 
 let dupIndex = 0;
 
-function start(){
-    document.getElementById("startScreen").style.display="none";
-    document.getElementById("mainContent").style.display="block";
-    generateGrid();
+function startSequence() {
+    document.getElementById("loading").style.display = "block";
+
+    if (!musicStarted) {
+        bgMusic.play().catch(()=>{});
+        musicStarted = true;
+    }
+
+    setTimeout(() => {
+        document.getElementById("startScreen").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
+        typeWriter();
+        generateGrid();
+    }, 2000);
 }
 
 function generateGrid(){
-    const grid = document.getElementById("grid");
+    const grid = document.getElementById("symbolGrid");
 
-    for(let row=0; row<6; row++){
-        for(let col=0; col<6; col++){
-
-            const key = row+"-"+col;
-            const img = document.createElement("img");
+    for(let row=0;row<6;row++){
+        for(let col=0;col<6;col++){
+            const key=row+"-"+col;
+            const img=document.createElement("img");
 
             if(uniques[key]){
-                img.src = uniques[key].img;
-                img.dataset.letter = uniques[key].letter;
-                img.dataset.row = row;
-                img.dataset.col = col;
-                img.onclick = selectUnique;
+                img.src=uniques[key].img;
+                img.dataset.letter=uniques[key].letter;
+                img.dataset.row=row;
+                img.dataset.col=col;
+                img.onclick=selectUnique;
             } else {
-                img.src = duplicates[dupIndex];
+                img.src=duplicates[dupIndex];
                 dupIndex++;
             }
 
             grid.appendChild(img);
         }
     }
+}
 
-    grid.style.opacity="1";
-    grid.style.pointerEvents="auto";
+function typeWriter() {
+    let i = 0;
+    const speed = 20;
+    const target = document.getElementById("typedText");
+
+    function typing() {
+        if (i < message.length) {
+            if(message.charAt(i) !== "\n"){
+                soundType.currentTime = 0;
+                soundType.volume = 0.15;
+                soundType.play().catch(()=>{});
+            }
+            target.innerHTML += message.charAt(i) === "\n" ? "<br>" : message.charAt(i);
+            i++;
+            setTimeout(typing, speed);
+        } else {
+            typingFinished = true;
+            soundEnd.play().catch(()=>{});
+            document.getElementById("symbolGrid").style.opacity = "1";
+            document.getElementById("symbolGrid").style.pointerEvents = "auto";
+        }
+    }
+    typing();
 }
 
 function selectUnique(){
-    if(locked || selection.length>=5) return;
+    if (!typingFinished || locked || selection.length>=5) return;
 
-    const letter = this.dataset.letter;
-    const row = parseInt(this.dataset.row);
-    const col = parseInt(this.dataset.col);
+    soundClick.currentTime=0;
+    soundClick.play().catch(()=>{});
+
+    const letter=this.dataset.letter;
+    const row=parseInt(this.dataset.row);
+    const col=parseInt(this.dataset.col);
 
     selection.push({
         letter:letter,
-        distance: Math.sqrt(
+        distance:Math.sqrt(
             Math.pow(row-centreX,2)+
             Math.pow(col-centreY,2)
         )
     });
 
-    const slot = document.getElementsByClassName("slot")[selection.length-1];
-    const clone = this.cloneNode(true);
+    const slot=document.getElementsByClassName("slot")[selection.length-1];
+    const clone=this.cloneNode(true);
     slot.appendChild(clone);
 
-    if(selection.length===5) verify();
+    if(selection.length===5) verifier();
 }
 
-function verify(){
+function verifier(){
 
-    // tri par distance croissante
     selection.sort((a,b)=>a.distance-b.distance);
+    const code=selection.map(s=>s.letter).join("");
 
-    const result = selection.map(s=>s.letter).join("");
-
-    if(result==="ARKUS"){
-        locked=true;
+    if (code === "ARKUS") {
+        locked = true;
         document.body.classList.add("activated");
-        document.getElementById("result").innerText="CANAL VALIDÉ";
-
-        setTimeout(()=>{
-            window.location.href="countdown.html";
-        },2000);
-
+        document.getElementById("resetBtn").style.display = "none";
+        document.getElementById("result").innerText = "CANAL VALIDÉ";
+        fadeMusic(0.05, 800);
+        soundTrue.play().catch(()=>{});
+        soundTrue.onended = function() {
+            window.location.href = "countdown.html";
+        };
     } else {
-        document.getElementById("result").innerText="Correspondance invalide.";
-        setTimeout(reset,1500);
+        soundFalse.play().catch(()=>{});
+        document.getElementById("result").innerText =
+            "Correspondance invalide.";
+        setTimeout(reset, 1500);
     }
 }
 
-function reset(){
-    if(locked) return;
-
-    selection=[];
-    document.getElementById("result").innerText="";
-
-    const slots=document.getElementsByClassName("slot");
-    for(let s of slots) s.innerHTML="";
+function reset() {
+    if (locked) return;
+    selection = [];
+    document.getElementById("result").innerText = "";
+    const slots = document.getElementsByClassName("slot");
+    for (let s of slots) s.innerHTML = "";
 }
 
+function fadeMusic(target, duration) {
+    let step = 0.01;
+    let interval = duration / ((bgMusic.volume - target) / step);
+
+    let fade = setInterval(() => {
+        if (bgMusic.volume > target) {
+            bgMusic.volume = Math.max(bgMusic.volume - step, target);
+        } else {
+            clearInterval(fade);
+        }
+    }, interval);
+}
 </script>
 
 </body>
