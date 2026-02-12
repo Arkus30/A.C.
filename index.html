@@ -5,13 +5,17 @@
 <title>Transmission Interceptée</title>
 
 <style>
+html, body {
+    min-height:100%;
+}
+
 body {
     margin:0;
     background: radial-gradient(circle at center, #150000 0%, #000 80%);
     color: #f5f5f5;
     font-family: "Consolas", monospace;
     text-align: center;
-    overflow:hidden;
+    overflow-y:auto;
     transition: background 1.5s ease;
 }
 
@@ -97,7 +101,7 @@ h1 { color: gold; letter-spacing:4px; }
     min-height:200px;
 }
 
-/* ===== NOUVELLE GRILLE 6x6 ===== */
+/* ===== GRILLE 6x6 ===== */
 
 .symbols {
     display:grid;
@@ -250,20 +254,23 @@ function generateGrid(){
 
     for(let row=0;row<6;row++){
         for(let col=0;col<6;col++){
+
             const key=row+"-"+col;
             const img=document.createElement("img");
+
+            img.dataset.row=row;
+            img.dataset.col=col;
 
             if(uniques[key]){
                 img.src=uniques[key].img;
                 img.dataset.letter=uniques[key].letter;
-                img.dataset.row=row;
-                img.dataset.col=col;
-                img.onclick=selectUnique;
             } else {
                 img.src=duplicates[dupIndex];
+                img.dataset.letter="X";
                 dupIndex++;
             }
 
+            img.onclick=selectUnique;
             grid.appendChild(img);
         }
     }
