@@ -252,6 +252,18 @@ function startSequence() {
 function generateGrid(){
     const grid = document.getElementById("symbolGrid");
 
+    // Reset au cas où
+    grid.innerHTML = "";
+    dupIndex = 0;
+
+    // 🔀 Mélange des doublons (Fisher-Yates shuffle)
+    const shuffledDuplicates = [...duplicates];
+    for (let i = shuffledDuplicates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledDuplicates[i], shuffledDuplicates[j]] =
+        [shuffledDuplicates[j], shuffledDuplicates[i]];
+    }
+
     for(let row=0;row<6;row++){
         for(let col=0;col<6;col++){
 
@@ -265,7 +277,7 @@ function generateGrid(){
                 img.src=uniques[key].img;
                 img.dataset.letter=uniques[key].letter;
             } else {
-                img.src=duplicates[dupIndex];
+                img.src=shuffledDuplicates[dupIndex];
                 img.dataset.letter="X";
                 dupIndex++;
             }
@@ -275,6 +287,7 @@ function generateGrid(){
         }
     }
 }
+
 
 function typeWriter() {
     let i = 0;
